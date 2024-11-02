@@ -9,6 +9,7 @@ import {Route, Routes, Link, useNavigate, useLocation } from "react-router-dom"
 import {Layout, Menu, Avatar, Typography, Col, Row, notification } from 'antd';
 import {FireOutlined, LoginOutlined} from '@ant-design/icons';
 import {useEffect, useState} from "react";
+import WelcomePageComponent from "./Components/Basic/WelcomePageComponent";
 
 let App = () => {
     const [api, contextHolder] = notification.useNotification();
@@ -36,7 +37,7 @@ let App = () => {
             placement,
         });
     };
-
+ 
     let checkLoginIsActive = async () => {
         if (localStorage.getItem("apiKey") == null) {
             setLogin(false);
@@ -134,7 +135,7 @@ let App = () => {
                 <div className="site-layout-content">
                     <Routes>
                         <Route path="/" element={
-                            <h1>Index</h1>
+                            <WelcomePageComponent/>
                         }/>
                         <Route path="/register" element={
                             <CreateUserComponent openNotification={openNotification}/>

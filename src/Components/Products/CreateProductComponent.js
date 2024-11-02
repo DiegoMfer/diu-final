@@ -5,13 +5,14 @@ import { useNavigate } from "react-router-dom";
 import { validateFormDataInputRequired, allowSubmitForm, setServerErrors } from "../../Utils/UtilsValidations";
 import { useSelector, useDispatch } from "react-redux";
 import { actions } from "../../Reducers/reducerCountSlice";
+import {categories} from "../../Utils/UtilsCategories"
 
 const { Option } = Select;
 const { Text } = Typography;
 
 let CreateProductComponent = () => {
     const navigate = useNavigate();
-    const categories = ["Electronics", "Clothing", "Books", "Home", "Beauty", "Toys", "Sports"];
+
 
     let [formData, setFormData] = useState({});
     let [formErrors, setFormErrors] = useState({}); // State for validation errors
