@@ -1,7 +1,7 @@
-import React, {useState} from "react";
-import {modifyStateProperty} from "../../Utils/UtilsState";
-import {Button, Card, Col, Form, Input, Row, Steps, Typography} from "antd";
-import {useNavigate} from 'react-router-dom';
+import React, { useState } from "react";
+import { modifyStateProperty } from "../../Utils/UtilsState";
+import { Button, Card, Col, Form, Input, Row, Steps, Typography } from "antd";
+import { useNavigate } from 'react-router-dom';
 import {
     allowSubmitForm,
     joinAllServerErrorMessages,
@@ -10,17 +10,16 @@ import {
     validateFormDataInputRequired
 } from "../../Utils/UtilsValidations";
 
-const {Step} = Steps;
+const { Step } = Steps;
 
-let CreateUserComponent = (props) => {
-    let {openNotification} = props;
-    let navigate = useNavigate();
+const CreateUserComponent = (props) => {
+    const { openNotification } = props;
+    const navigate = useNavigate();
 
-    // State for form data and errors
-    let requiredInForm = ["email", "password"];  // Cambiado a email
-    let [formErrors, setFormErrors] = useState({});
-    let [formData, setFormData] = useState({
-        email: '',  // Cambiado a email
+    const requiredInForm = ["email", "password"];
+    const [formErrors, setFormErrors] = useState({});
+    const [formData, setFormData] = useState({
+        email: '',
         password: '',
         name: '',
         surname: '',
@@ -31,46 +30,37 @@ let CreateUserComponent = (props) => {
         postalCode: '',
         birthday: ''
     });
+    const [touchedFields, setTouchedFields] = useState({});
+    const [currentStep, setCurrentStep] = useState(0);
 
-    // State for the current step
-    let [currentStep, setCurrentStep] = useState(0);
-
-    // Step fields configuration
     const steps = [
         {
             title: "Account",
             fields: [
-                {label: "Email", name: "email", type: "text", validator: validateFormDataInputEmail},  // Cambiado a email
-                {label: "Password", name: "password", type: "password", validator: validateFormDataInputRequired},
+                { label: "Email", name: "email", type: "text", validator: validateFormDataInputEmail },
+                { label: "Password", name: "password", type: "password", validator: validateFormDataInputRequired },
             ]
         },
         {
             title: "Information",
             fields: [
-                {label: "Name", name: "name", type: "text", validator: null},
-                {label: "Surname", name: "surname", type: "text", validator: null},
-                {label: "Document Identity", name: "documentIdentity", type: "text", validator: null},
-                {label: "Document Number", name: "documentNumber", type: "text", validator: null},
-                {label: "Country", name: "country", type: "text", validator: null},
+                { label: "Name", name: "name", type: "text", validator: null },
+                { label: "Surname", name: "surname", type: "text", validator: null },
+                { label: "Document Identity", name: "documentIdentity", type: "text", validator: null },
+                { label: "Document Number", name: "documentNumber", type: "text", validator: null },
+                { label: "Country", name: "country", type: "text", validator: null },
             ]
         },
         {
-            title: "Address ",
+            title: "Address",
             fields: [
-                {label: "Address", name: "address", type: "text", validator: null},
-                {label: "Postal Code", name: "postalCode", type: "text", validator: null},
-                {
-                    label: "Birthday",
-                    name: "birthday",
-                    type: "date",
-                    validator: null
-
-                },
+                { label: "Address", name: "address", type: "text", validator: null },
+                { label: "Postal Code", name: "postalCode", type: "text", validator: null },
+                { label: "Birthday", name: "birthday", type: "date", validator: null },
             ]
         }
     ];
 
-    // Function to handle form submission
     const clickCreate = async () => {
         const cleanedData = Object.fromEntries(
             Object.entries(formData).map(([key, value]) => [key, value || null])
@@ -80,63 +70,81 @@ let CreateUserComponent = (props) => {
             cleanedData.birthday = new Date(cleanedData.birthday).getTime();
         }
 
-        let response = await fetch(process.env.REACT_APP_BACKEND_BASE_URL + "/users", {
+        const response = await fetch(process.env.REACT_APP_BACKEND_BASE_URL + "/users", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(cleanedData)
         });
 
         if (response.ok) {
-            let responseBody = await response.json();
-            console.log("User created:", responseBody);
+            const responseBody = await response.json();
             openNotification("top", "User registration successful", "success");
             navigate("/login");
         } else {
-            let responseBody = await response.json();
-            let serverErrors = responseBody.errors;
+            const responseBody = await response.json();
+            const serverErrors = responseBody.errors;
             setServerErrors(serverErrors, setFormErrors);
-            let notificationMsg = joinAllServerErrorMessages(serverErrors);
+            const notificationMsg = joinAllServerErrorMessages(serverErrors);
             openNotification("top", notificationMsg, "error");
         }
     };
 
-    // Handle next step
     const nextStep = () => {
         if (currentStep < steps.length - 1) {
             setCurrentStep(currentStep + 1);
         }
     };
 
-    // Handle previous step
     const previousStep = () => {
         if (currentStep > 0) {
             setCurrentStep(currentStep - 1);
         }
     };
 
-    // Render component
+    const handleFieldChange = (field, value) => {
+        modifyStateProperty(formData, setFormData, field.name, value);
+
+        setTouchedFields(prev => ({ ...prev, [field.name]: true }));
+
+        if (field.validator) {
+            // Run the validator and let it manage its own error messages
+            field.validator(formData, field.name, formErrors, setFormErrors);
+        }
+    };
+
     return (
-        <Row align="middle" justify="center" style={{minHeight: "80vh"}}>
+        <Row align="middle" justify="center" style={{ minHeight: "80vh" }}>
             <Col xs={24} sm={24} md={16} lg={12} xl={8}>
-                <Card title="Create User" style={{margin: "15px"}}>
+                <Card title="Create User" style={{ margin: "15px" }}>
                     <Steps current={currentStep}>
                         {steps.map(step => (
-                            <Step key={step.title} title={step.title}/>
+                            <Step key={step.title} title={step.title} />
                         ))}
                     </Steps>
-                    <Form layout="vertical" style={{marginTop: "20px"}}>
+                    <Form layout="vertical" style={{ marginTop: "20px" }}>
                         {steps[currentStep].fields.map(field => (
-                            <Form.Item key={field.name} label={field.label} validateStatus={
-                                field.validator ? field.validator(formData, field.name, formErrors, setFormErrors) ? "success" : "error" : ""
-                            }>
+                            <Form.Item
+                                key={field.name}
+                                label={
+                                    <>
+                                        {field.label}
+                                        {requiredInForm.includes(field.name) && <span style={{ color: "red" }}> *</span>}
+                                    </>
+                                }
+                                validateStatus={
+                                    touchedFields[field.name] && formErrors[field.name] ? "error" : ""
+                                }
+                            >
                                 <Input
                                     type={field.type}
                                     placeholder={`Enter your ${field.label.toLowerCase()}`}
                                     value={formData[field.name]}
-                                    onChange={(e) => modifyStateProperty(formData, setFormData, field.name, e.currentTarget.value)}
+                                    onChange={(e) => handleFieldChange(field, e.target.value)}
                                 />
-                                {formErrors?.[field.name]?.msg && (
-                                    <Typography.Text type="danger">{formErrors[field.name].msg}</Typography.Text>
+                                {touchedFields[field.name] && formErrors[field.name]?.msg && (
+                                    <Typography.Text type="danger">
+                                        {formErrors[field.name].msg}
+                                    </Typography.Text>
                                 )}
                             </Form.Item>
                         ))}
@@ -150,8 +158,11 @@ let CreateUserComponent = (props) => {
                                     Next
                                 </Button>
                             ) : (
-                                <Button type="primary" onClick={clickCreate}
-                                        disabled={!allowSubmitForm(formData, formErrors, requiredInForm)}>
+                                <Button
+                                    type="primary"
+                                    onClick={clickCreate}
+                                    disabled={!allowSubmitForm(formData, formErrors, requiredInForm)}
+                                >
                                     Create User
                                 </Button>
                             )}
