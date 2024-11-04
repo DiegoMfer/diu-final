@@ -1,3 +1,22 @@
+import {
+    LaptopOutlined,
+    SkinOutlined,
+    BookOutlined,
+    HomeOutlined,
+    SmileOutlined,
+    GiftOutlined,
+    DribbbleOutlined
+} from '@ant-design/icons';
+
+export const iconCategories = [
+    { name: "Electronics", icon: <LaptopOutlined /> },
+    { name: "Clothing", icon: <SkinOutlined /> },
+    { name: "Books", icon: <BookOutlined /> },
+    { name: "Home", icon: <HomeOutlined /> },
+    { name: "Beauty", icon: <SmileOutlined /> },
+    { name: "Toys", icon: <GiftOutlined /> },
+    { name: "Sports", icon: <DribbbleOutlined /> }
+];
 
 
 export const categories = [

@@ -37,7 +37,7 @@ let LoginFormComponent = (props) => {
             console.log("ok " + responseBody)
             setLogin(true)
             openNotification("top", "Login successfull", "success")
-            navigate("/products")
+            navigate("/")
         } else {
             let responseBody = await response.json();
             let serverErrors = responseBody.errors;

@@ -10,6 +10,8 @@ import {Layout, Menu, Avatar, Typography, Col, Row, notification } from 'antd';
 import {FireOutlined, LoginOutlined} from '@ant-design/icons';
 import {useEffect, useState} from "react";
 import WelcomePageComponent from "./Components/Basic/WelcomePageComponent";
+import ListMyTransactionsComponent from "./Components/Transactions/ListMyTransactionComponent";
+import GetUserComponent from "./Components/User/GetUserComponent";
 
 let App = () => {
     const [api, contextHolder] = notification.useNotification();
@@ -37,7 +39,7 @@ let App = () => {
             placement,
         });
     };
- 
+
     let checkLoginIsActive = async () => {
         if (localStorage.getItem("apiKey") == null) {
             setLogin(false);
@@ -100,7 +102,7 @@ let App = () => {
                     <Col xs= {18} sm={19} md={20} lg={21} xl = {22}>
                         {!login &&
                             <Menu theme="dark" mode="horizontal" items={[
-                                {key: "logo", label: <img src="/logo.png" width="40" height="40"/>},
+                                { key: "logo", label: <Link to="/"><img src="/logo.png" width="40" height="40" alt="Logo" /></Link> },
                                 {key: "menuLogin", icon: <LoginOutlined/>, label: <Link to="/login">Login</Link>},
                                 {key: "menuRegister", label: <Link to="/register">Register</Link>},
                             ]}>
@@ -109,11 +111,12 @@ let App = () => {
 
                         {login &&
                             <Menu theme="dark" mode="horizontal" items={[
-                                {key: "logo", label: <img src="/logo.png" width="40" height="40"/>},
-                                {key: "menuProducts", label: <Link to="/products">Products</Link>},
-                                {key: "menuMyProduct", label: <Link to="/products/own">My Products</Link> },
-                                {key: "menuCreateProduct", label: <Link to="/products/create">Sell</Link> },
-                                {key: "menuDisconnect", label: <Link to="#" onClick={disconnect}>Disconnect</Link>},
+                                { key: "logo", label: <Link to="/"><img src="/logo.png" width="40" height="40" alt="Logo" /></Link> },
+                                { key: "menuProducts", label: <Link to="/products">Products</Link> },
+                                { key: "menuMyProduct", label: <Link to="/products/own">My Products</Link> },
+                                { key: "menuCreateProduct", label: <Link to="/products/create">Sell</Link> },
+                                { key: "menuDisconnect", label: <Link to="#" onClick={disconnect}>Disconnect</Link> },
+                                { key: "menuMyTransactions", label: <Link to="/transactions/own">Show my transactions</Link> },
                             ]}>
                             </Menu>
                         }
@@ -137,6 +140,9 @@ let App = () => {
                         <Route path="/" element={
                             <WelcomePageComponent/>
                         }/>
+                        <Route path="/transactions/own" element={
+                            <ListMyTransactionsComponent/>
+                        }/>
                         <Route path="/register" element={
                             <CreateUserComponent openNotification={openNotification}/>
                         }/>
@@ -158,6 +164,10 @@ let App = () => {
                         <Route path="/products/own" element={
                             <ListMyProductsComponent />
                         }></Route>
+                        <Route path="/users/:id" element={
+                            <GetUserComponent/>
+                        }/>
+
                     </Routes>
                 </div>
             </Content>
