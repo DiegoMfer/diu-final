@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Card, Col, Row, Input, Checkbox, Slider } from 'antd';
-import {iconCategories} from "../../Utils/UtilsCategories";
+import { Link, useSearchParams } from "react-router-dom";
+import { Card, Col, Row, Input, Checkbox, Slider, Button, message } from 'antd';
+import { iconCategories } from "../../Utils/UtilsCategories";
 
 let ListProductsComponent = () => {
     let [products, setProducts] = useState([]);
     let [filteredProducts, setFilteredProducts] = useState([]);
 
+    const [searchParams] = useSearchParams(); // Access query parameters
     const [categoryFilter, setCategoryFilter] = useState([]);
     const [titleFilter, setTitleFilter] = useState('');
     const [priceRange, setPriceRange] = useState([0, 1000]);
@@ -39,6 +40,12 @@ let ListProductsComponent = () => {
             let productsWithImage = await Promise.all(promisesForImages);
             setProducts(productsWithImage);
             setFilteredProducts(productsWithImage); // Initialize filtered products
+
+            // Check for category in query parameters
+            const categoryParam = searchParams.get('category');
+            if (categoryParam) {
+                setCategoryFilter([categoryParam]); // Set category filter from query param
+            }
         } else {
             let responseBody = await response.json();
             let serverErrors = responseBody.errors;
@@ -68,6 +75,41 @@ let ListProductsComponent = () => {
         setFilteredProducts(filtered);
     };
 
+    const buyProduct = async (id) => {
+        let response = await fetch(
+            process.env.REACT_APP_BACKEND_BASE_URL + "/transactions/",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json ",
+                    "apikey": localStorage.getItem("apiKey")
+                },
+                body: JSON.stringify({
+                    productId: id
+                })
+            }
+        );
+
+        if (response.ok) {
+            let jsonData = await response.json();
+            if (jsonData.affectedRows === 1) {
+                message.success('Purchase successful!');
+            }
+        } else {
+            let responseBody = await response.json();
+            let serverErrors = responseBody.errors;
+            serverErrors.forEach(e => {
+                console.log("Error: " + e.msg);
+                message.error('Purchase failed: ' + e.msg);
+            });
+        }
+    };
+
+    const handleQuickBuy = (product) => {
+        console.log("Quick Buy for: ", product);
+        buyProduct(product.id);
+    };
+
     return (
         <div>
             <h2>Products</h2>
@@ -83,6 +125,7 @@ let ListProductsComponent = () => {
                     }))}
                     onChange={setCategoryFilter}
                     style={{ marginBottom: '10px', display: 'block' }}
+                    value={categoryFilter} // Controlled component
                 />
                 <Input
                     placeholder="Search Title"
@@ -101,15 +144,44 @@ let ListProductsComponent = () => {
             </div>
 
             <Row gutter={[16, 16]}>
-                {filteredProducts.map(p => (
-                    <Col span={8} key={p.id}>
-                        <Link to={"/products/" + p.id}>
-                            <Card title={p.title} cover={<img src={p.image} alt={p.title} />}>
-                                {p.price} €
-                            </Card>
-                        </Link>
+                {filteredProducts.length > 0 ? (
+                    filteredProducts.map(p => (
+                        <Col key={p.id} xs={24} sm={12} md={8} lg={6} xl={4}>
+                            <Link to={"/products/" + p.id}>
+                                <Card
+                                    title={p.title}
+                                    cover={<img src={p.image} alt={p.title} />}
+                                >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}></div>
+                                </Card>
+                            </Link>
+                            <div style={{
+                                border: '1px solid #ddd',
+                                borderRadius: '4px',
+                                padding: '10px',
+                                marginTop: '10px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                backgroundColor: '#f9f9f9'
+                            }}>
+                                <span>{p.price} €</span>
+                                <Button
+                                    type="primary"
+                                    onClick={(event) => handleQuickBuy(p)}
+                                >
+                                    Quick Buy
+                                </Button>
+                            </div>
+                        </Col>
+                    ))
+                ) : (
+                    <Col span={24}>
+                        <div style={{ textAlign: 'center', padding: '20px', fontSize: '18px', color: '#888' }}>
+                            No products available in this category.
+                        </div>
                     </Col>
-                ))}
+                )}
             </Row>
         </div>
     );

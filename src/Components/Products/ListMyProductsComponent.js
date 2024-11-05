@@ -1,112 +1,176 @@
-import {useState, useEffect } from "react";
-import { Table, Space } from 'antd';
+import { useState, useEffect } from "react";
+import { Table, Button, Space, Statistic, Row, Col, Card } from 'antd';
 import { Link } from "react-router-dom";
-import { timestampToString} from "../../Utils/UtilsDates";
+import { timestampToString } from "../../Utils/UtilsDates";
 
-let ListMyProductsComponent = () => {
-    let [products, setProducts] = useState([])
+const ListMyProductsComponent = () => {
+    const [products, setProducts] = useState([]);
+    const [stats, setStats] = useState({
+        totalProductsSold: 0,
+        totalProductsBought: 0,
+        totalEarnings: 0
+    });
 
     useEffect(() => {
         getMyProducts();
-    }, [])
+    }, []);
 
-    let deleteProduct = async (id) => {
-        let response = await fetch(
-            process.env.REACT_APP_BACKEND_BASE_URL+"/products/"+id,
+    const deleteProduct = async (id) => {
+        const response = await fetch(
+            process.env.REACT_APP_BACKEND_BASE_URL + "/products/" + id,
             {
                 method: "DELETE",
                 headers: {
                     "apikey": localStorage.getItem("apiKey")
                 },
-            });
+            }
+        );
 
-        if ( response.ok ){
-            let jsonData = await response.json();
-            if ( jsonData.deleted){
-                let productsAftherDelete = products.filter(p => p.id != id)
-                setProducts(productsAftherDelete)
+        if (response.ok) {
+            const jsonData = await response.json();
+            if (jsonData.deleted) {
+                const productsAfterDelete = products.filter(p => p.id !== id);
+                setProducts(productsAfterDelete);
+                calculateStats(productsAfterDelete); // Update stats after deletion
             }
         } else {
-            let responseBody = await response.json();
-            let serverErrors = responseBody.errors;
-            serverErrors.forEach( e => {
-                console.log("Error: "+e.msg)
-            })
+            const responseBody = await response.json();
+            const serverErrors = responseBody.errors;
+            serverErrors.forEach(e => {
+                console.log("Error: " + e.msg);
+            });
         }
-    }
+    };
 
-    let getMyProducts = async () => {
-        let response = await fetch(
-            process.env.REACT_APP_BACKEND_BASE_URL+"/products/own/",
+    const getMyProducts = async () => {
+        const response = await fetch(
+            process.env.REACT_APP_BACKEND_BASE_URL + "/products/own/",
             {
                 method: "GET",
                 headers: {
                     "apikey": localStorage.getItem("apiKey")
                 },
-            });
+            }
+        );
 
-        if ( response.ok ){
+        if (response.ok) {
             let jsonData = await response.json();
-            jsonData.map( product => {
-                product.key = product.id
-                return product
-            })
-            setProducts(jsonData)
+            jsonData = jsonData.map(product => ({
+                ...product,
+                key: product.id, // Set a unique key for each product
+            }));
+            setProducts(jsonData);
+            calculateStats(jsonData); // Calculate stats based on fetched data
         } else {
-            let responseBody = await response.json();
-            let serverErrors = responseBody.errors;
-            serverErrors.forEach( e => {
-                console.log("Error: "+e.msg)
-            })
+            const responseBody = await response.json();
+            const serverErrors = responseBody.errors;
+            serverErrors.forEach(e => {
+                console.log("Error: " + e.msg);
+            });
         }
-    }
+    };
 
-    let columns = [
+    const calculateStats = (products) => {
+        const now = new Date();
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+
+        const stats = products.reduce(
+            (acc, product) => {
+                const productDate = new Date(product.date);
+                if (productDate >= lastMonth && productDate <= now) {
+                    if (product.sellerId === localStorage.getItem("userId")) {
+                        acc.totalProductsSold += 1;
+                        acc.totalEarnings += product.price;
+                    }
+                    if (product.buyerId === localStorage.getItem("userId")) {
+                        acc.totalProductsBought += 1;
+                    }
+                }
+                return acc;
+            },
+            { totalProductsSold: 0, totalProductsBought: 0, totalEarnings: 0 }
+        );
+
+        setStats(stats);
+    };
+
+    const columns = [
         {
             title: "Id",
             dataIndex: "id",
+            sorter: (a, b) => a.id - b.id, // Sort by numeric ID
         },
         {
             title: "Seller Id",
-            dataIndex: "sellerId"
+            dataIndex: "sellerId",
+            sorter: (a, b) => a.sellerId - b.sellerId, // Sort numerically
         },
         {
             title: "Title",
-            dataIndex: "title"
+            dataIndex: "title",
+            sorter: (a, b) => a.title.localeCompare(b.title), // Sort alphabetically
         },
         {
             title: "Description",
             dataIndex: "description",
+            sorter: (a, b) => a.description.localeCompare(b.description), // Sort alphabetically
         },
         {
             title: "Price (€)",
             dataIndex: "price",
+            sorter: (a, b) => a.price - b.price, // Sort by numeric price
         },
         {
             title: "Date",
             dataIndex: "date",
-            render: (date) => timestampToString(date)
+            render: (date) => timestampToString(date),
+            sorter: (a, b) => new Date(a.date) - new Date(b.date), // Sort by date
         },
         {
             title: "Buyer",
             dataIndex: [],
             render: (product) =>
-               <Link to={"/user/"+product.buyerId}>{ product.buyerEmail }</Link>
+                <Link to={`/users/${product.buyerId}`}>{product.buyerEmail}</Link>,
+            sorter: (a, b) => (a.buyerEmail || "").localeCompare(b.buyerEmail || ""), // Sort alphabetically, handle nulls
         },
         {
             title: "Actions",
             dataIndex: "id",
-            render: (id) =>
-                <Space.Compact direction="vertical">
-                    <Link to={"/products/edit/"+id}>Edit</Link>
-                    <Link to={"#"} onClick={() => deleteProduct(id)}>Delete</Link>
-                </Space.Compact>
+            render: (id) => (
+                <Space direction="vertical">
+                    <Link to={`/products/edit/${id}`}>
+                        <Button type="primary">Edit</Button>
+                    </Link>
+                    <Button
+                        type="primary"
+                        danger
+                        onClick={() => deleteProduct(id)}
+                    >
+                        Delete
+                    </Button>
+                </Space>
+            ),
         },
-    ]
+    ];
 
     return (
-        <Table columns={columns} dataSource={products}></Table>
-    )
+        <>
+            <Card style={{ marginBottom: 16 }} title="Sales Summary" bordered>
+                <Row gutter={16}>
+                    <Col span={8}>
+                        <Statistic title="Total Products Sold (Last Month)" value={stats.totalProductsSold} />
+                    </Col>
+                    <Col span={8}>
+                        <Statistic title="Total Products Bought (Last Month)" value={stats.totalProductsBought} />
+                    </Col>
+                    <Col span={8}>
+                        <Statistic title="Total Earnings (€) (Last Month)" value={stats.totalEarnings} precision={2} />
+                    </Col>
+                </Row>
+            </Card>
+            <Table columns={columns} dataSource={products} />
+        </>
+    );
 }
 
 export default ListMyProductsComponent;

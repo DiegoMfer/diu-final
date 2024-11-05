@@ -5,14 +5,13 @@ import { useNavigate } from "react-router-dom";
 import { validateFormDataInputRequired, allowSubmitForm, setServerErrors } from "../../Utils/UtilsValidations";
 import { useSelector, useDispatch } from "react-redux";
 import { actions } from "../../Reducers/reducerCountSlice";
-import {categories} from "../../Utils/UtilsCategories"
+import { categories } from "../../Utils/UtilsCategories";
 
 const { Option } = Select;
 const { Text } = Typography;
 
 let CreateProductComponent = () => {
     const navigate = useNavigate();
-
 
     let [formData, setFormData] = useState({});
     let [formErrors, setFormErrors] = useState({}); // State for validation errors
@@ -34,11 +33,17 @@ let CreateProductComponent = () => {
             valid = false;
         }
 
-        // Price validation as a number
-        if (formData.price && isNaN(formData.price)) {
-            formErrors["price"] = { msg: "Price is not a number" };
-            setFormErrors({ ...formErrors });
-            valid = false;
+        // Price validation: check if it's a number and not negative
+        if (formData.price) {
+            if (isNaN(formData.price)) {
+                formErrors["price"] = { msg: "Price is not a number" };
+                setFormErrors({ ...formErrors });
+                valid = false;
+            } else if (Number(formData.price) < 0) {
+                formErrors["price"] = { msg: "Price cannot be negative" };
+                setFormErrors({ ...formErrors });
+                valid = false;
+            }
         }
 
         // Image validation (ensure an image file is selected)

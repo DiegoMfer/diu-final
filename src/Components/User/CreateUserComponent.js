@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { modifyStateProperty } from "../../Utils/UtilsState";
-import { Button, Card, Col, Form, Input, Row, Steps, Typography } from "antd";
+import { Button, Card, Col, Form, Input, Row, Steps, Typography, Select } from "antd";
 import { useNavigate } from 'react-router-dom';
 import {
     allowSubmitForm,
@@ -11,6 +11,9 @@ import {
 } from "../../Utils/UtilsValidations";
 
 const { Step } = Steps;
+const { Option } = Select;
+
+const countries = ["United States", "Canada", "Mexico", "United Kingdom", "Germany", "France", "Spain", "China", "Japan", "Brazil"];
 
 const CreateUserComponent = (props) => {
     const { openNotification } = props;
@@ -48,7 +51,7 @@ const CreateUserComponent = (props) => {
                 { label: "Surname", name: "surname", type: "text", validator: null },
                 { label: "Document Identity", name: "documentIdentity", type: "text", validator: null },
                 { label: "Document Number", name: "documentNumber", type: "text", validator: null },
-                { label: "Country", name: "country", type: "text", validator: null },
+                { label: "Country", name: "country", type: "select", validator: null },
             ]
         },
         {
@@ -90,7 +93,21 @@ const CreateUserComponent = (props) => {
     };
 
     const nextStep = () => {
-        if (currentStep < steps.length - 1) {
+        // Check required fields
+        const currentStepFields = steps[currentStep].fields;
+        let hasErrors = false;
+
+        currentStepFields.forEach(field => {
+            if (requiredInForm.includes(field.name) && !formData[field.name]) {
+                hasErrors = true;
+                setFormErrors(prevErrors => ({
+                    ...prevErrors,
+                    [field.name]: { msg: `${field.label} is required` }
+                }));
+            }
+        });
+
+        if (!hasErrors && currentStep < steps.length - 1) {
             setCurrentStep(currentStep + 1);
         }
     };
@@ -135,12 +152,29 @@ const CreateUserComponent = (props) => {
                                     touchedFields[field.name] && formErrors[field.name] ? "error" : ""
                                 }
                             >
-                                <Input
-                                    type={field.type}
-                                    placeholder={`Enter your ${field.label.toLowerCase()}`}
-                                    value={formData[field.name]}
-                                    onChange={(e) => handleFieldChange(field, e.target.value)}
-                                />
+                                {field.type === "select" ? (
+                                    <Select
+                                        showSearch
+                                        placeholder={`Select your ${field.label.toLowerCase()}`}
+                                        optionFilterProp="children"
+                                        value={formData[field.name]}
+                                        onChange={(value) => handleFieldChange(field, value)}
+                                        filterOption={(input, option) =>
+                                            option.children.toLowerCase().includes(input.toLowerCase())
+                                        }
+                                    >
+                                        {countries.map(country => (
+                                            <Option key={country} value={country}>{country}</Option>
+                                        ))}
+                                    </Select>
+                                ) : (
+                                    <Input
+                                        type={field.type}
+                                        placeholder={`Enter your ${field.label.toLowerCase()}`}
+                                        value={formData[field.name]}
+                                        onChange={(e) => handleFieldChange(field, e.target.value)}
+                                    />
+                                )}
                                 {touchedFields[field.name] && formErrors[field.name]?.msg && (
                                     <Typography.Text type="danger">
                                         {formErrors[field.name].msg}

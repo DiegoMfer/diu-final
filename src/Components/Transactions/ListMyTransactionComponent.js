@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
 import { Table, Space } from 'antd';
 import { Link } from "react-router-dom";
-import { timestampToString } from "../../Utils/UtilsDates";
+import { UserOutlined } from '@ant-design/icons';
 
 const ListMyTransactionsComponent = () => {
-    let [transactions, setTransactions] = useState([]);
+    const [transactions, setTransactions] = useState([]);
 
     useEffect(() => {
         getMyTransactions();
     }, []);
 
-    let getMyTransactions = async () => {
-        let response = await fetch(
+    const getMyTransactions = async () => {
+        const response = await fetch(
             process.env.REACT_APP_BACKEND_BASE_URL + "/transactions/own",
             {
                 method: "GET",
@@ -23,58 +23,69 @@ const ListMyTransactionsComponent = () => {
 
         if (response.ok) {
             let jsonData = await response.json();
-            jsonData.map(transaction => {
-                transaction.key = transaction.id; // Set a unique key for each transaction
-                return transaction;
-            });
+            jsonData = jsonData.map(transaction => ({
+                ...transaction,
+                key: transaction.id, // Set a unique key for each transaction
+            }));
             setTransactions(jsonData);
         } else {
-            let responseBody = await response.json();
-            let serverErrors = responseBody.errors;
+            const responseBody = await response.json();
+            const serverErrors = responseBody.errors;
             serverErrors.forEach(e => {
                 console.log("Error: " + e.msg);
             });
         }
     };
 
-    let columns = [
+    const columns = [
         {
             title: "Transaction ID",
             dataIndex: "id",
+            sorter: (a, b) => a.id - b.id, // Sort by numeric ID
         },
         {
             title: "Buyer ID",
-            dataIndex: "buyerId"
+            dataIndex: "buyerId",
+            render: (buyerId) => (
+                <Link to={`/users/${buyerId}`}>
+                    <UserOutlined style={{ marginRight: 8 }} />
+                    {buyerId}
+                </Link>
+            ),
+            sorter: (a, b) => a.buyerId - b.buyerId, // Sort numerically
         },
         {
             title: "Seller ID",
-            dataIndex: "sellerId"
+            dataIndex: "sellerId",
+            render: (sellerId) => (
+                <Link to={`/users/${sellerId}`}>
+                    <UserOutlined style={{ marginRight: 8 }} />
+                    {sellerId}
+                </Link>
+            ),
+            sorter: (a, b) => a.sellerId - b.sellerId, // Sort numerically
         },
         {
             title: "Product ID",
-            dataIndex: "productId"
+            dataIndex: "productId",
+            sorter: (a, b) => a.productId - b.productId, // Sort by numeric product ID
         },
         {
             title: "Product Price (€)",
             dataIndex: "productPrice",
+            sorter: (a, b) => a.productPrice - b.productPrice, // Sort by product price
         },
         {
             title: "Start Date",
             dataIndex: "startDate",
-            render: (date) => timestampToString(date) // Assuming timestampToString can convert the date
+            render: (date) => new Date(date).toLocaleDateString(),
+            sorter: (a, b) => new Date(a.startDate) - new Date(b.startDate), // Sort by start date
         },
         {
             title: "End Date",
             dataIndex: "endDate",
-            render: (date) => timestampToString(date) // Render end date
-        },
-        {
-            title: "Actions",
-            dataIndex: "id",
-            render: (id) =>
-                <Space.Compact direction="vertical">
-                    <Link to={`/transactions/${id}`}>View Details</Link>
-                </Space.Compact>
+            render: (date) => new Date(date).toLocaleDateString(),
+            sorter: (a, b) => new Date(a.endDate) - new Date(b.endDate), // Sort by end date
         },
     ];
 

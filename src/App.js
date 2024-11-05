@@ -24,8 +24,16 @@ let App = () => {
     let {Header, Content, Footer} = Layout;
 
     useEffect(() => {
-        checkAll()
-    }, [])
+
+        document.title = "Walapep";
+        const favicon = document.querySelector("link[rel='icon']");
+        if (favicon) {
+            favicon.href = "https://cdn-icons-png.flaticon.com/512/3718/3718330.png"; // Update with your favicon URL
+        }
+
+        checkAll();
+    }, []);
+
 
     let checkAll = async () => {
         let isActive = await checkLoginIsActive()
