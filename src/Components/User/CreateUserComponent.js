@@ -107,6 +107,26 @@ const CreateUserComponent = (props) => {
             }
         });
 
+        // Add additional check for email and password fields
+        if (currentStep === 0) {
+            const { email, password } = formData;
+            if (!email || !password) {
+                hasErrors = true;
+                if (!email) {
+                    setFormErrors(prevErrors => ({
+                        ...prevErrors,
+                        email: { msg: "Email is required" }
+                    }));
+                }
+                if (!password) {
+                    setFormErrors(prevErrors => ({
+                        ...prevErrors,
+                        password: { msg: "Password is required" }
+                    }));
+                }
+            }
+        }
+
         if (!hasErrors && currentStep < steps.length - 1) {
             setCurrentStep(currentStep + 1);
         }
@@ -127,6 +147,11 @@ const CreateUserComponent = (props) => {
             // Run the validator and let it manage its own error messages
             field.validator(formData, field.name, formErrors, setFormErrors);
         }
+    };
+
+    const isNextButtonDisabled = () => {
+        const { email, password } = formData;
+        return !email || !password;
     };
 
     return (
@@ -188,7 +213,15 @@ const CreateUserComponent = (props) => {
                                 Previous
                             </Button>
                             {currentStep < steps.length - 1 ? (
-                                <Button type="primary" onClick={nextStep}>
+                                <Button
+                                    type="primary"
+                                    onClick={nextStep}
+                                    disabled={isNextButtonDisabled()} // Disable button based on conditions
+                                    style={{
+                                        opacity: isNextButtonDisabled() ? 0.5 : 1, // Change opacity based on enabled state
+                                        cursor: isNextButtonDisabled() ? 'not-allowed' : 'pointer' // Change cursor style
+                                    }}
+                                >
                                     Next
                                 </Button>
                             ) : (
